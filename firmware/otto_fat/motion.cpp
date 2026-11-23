@@ -13,6 +13,12 @@ static unsigned long s_lastEnd = 0;
 static void markEnd() { s_lastEnd = millis(); }
 void motion_markEnd() { markEnd(); }
 
+// 명령 각도(각도↑ = 손 들기) → 서보 실제 각도. ARM_DIR_* 참고
+static void armsWrite(int16_t l, int16_t r) {
+  s_armL.write(ARM_DIR_L < 0 ? 180 - l : l);
+  s_armR.write(ARM_DIR_R < 0 ? 180 - r : r);
+}
+
 static void armsAttach() {
   s_armL.attach(PIN_ARM_L);
   s_armR.attach(PIN_ARM_R);
@@ -28,8 +34,7 @@ void motion_begin() {
   }
   Otto.home();
   armsAttach();
-  s_armL.write(ARM_REST_L);
-  s_armR.write(ARM_REST_R);
+  armsWrite(ARM_REST_L, ARM_REST_R);
   markEnd();
 }
 
@@ -69,8 +74,7 @@ void motion_cycle() { motion_runOnce(s_id, s_period, s_size); }
 
 void motion_arms(int16_t l, int16_t r) {
   if (!s_armL.attached()) armsAttach();
-  s_armL.write(l);
-  s_armR.write(r);
+  armsWrite(l, r);
 }
 
 void motion_home() {

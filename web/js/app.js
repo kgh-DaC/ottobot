@@ -278,6 +278,10 @@ function refreshControls() {
   }
   for (const e of $$('.cmd-any')) e.disabled = !c || e.dataset.unavailable === '1';
   $('#btnStop').disabled = !c;
+  // 홈 버튼은 동작 중에도 누를 수 있다(동작 중이면 STOP = 다리 홈·팔 90°). 넘어짐·후퇴 중만 막는다
+  const home = $('#btnHome');
+  home.disabled = !c || servoBlocked;
+  if (c && !servoBlocked) home.title = '처음 자세로 (동작 중이면 멈추고 처음 자세로)';
   for (const fn of refreshHooks) { try { fn(); } catch (e) { console.error(e); } }
 }
 
@@ -364,6 +368,8 @@ function setupMove() {
   }
 
   $('#btnHome').addEventListener('click', () => {
+    // 동작 중(반복 이동·제스처 등)이면 STOP: 펌웨어가 중단 후 다리 홈·팔 90°로 돌린다(behavior.md)
+    if (link.busy || link.hold) { emergencyStop(); return; }
     releaseAllInputs();
     send(CMD.MOVE, [0]);
   });

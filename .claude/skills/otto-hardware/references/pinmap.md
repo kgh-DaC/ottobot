@@ -12,8 +12,8 @@
 | D8 | 초음파 TRIG | 출력 | bl_motion `TRIG 8`, 배선도 | |
 | D9 | 초음파 ECHO | 입력 | bl_motion `ECHO 9`, 배선도 | Timer1 PWM 상실은 무관 |
 | D10 | (비어 있음) | - | Otto_APP은 PIN_ASSEMBLY로 사용 | 필요 시 INPUT_PULLUP 모드 스위치용 |
-| D11 | BLE 모듈 TX → Arduino RX | 입력 | bl_motion `SoftwareSerial BT(11, 12)` | |
-| D12 | Arduino TX → BLE 모듈 RX | 출력 | bl_motion | 분압 권장 |
+| D11 | BLE 모듈 TX → Arduino RX | 입력 | bl_motion `SoftwareSerial BT(11, 12)`, 2026-11-24 실물 확인 | ref/블루투스 회로도.jpg(D10/D11)와 다름 |
+| D12 | Arduino TX → BLE 모듈 RX | 출력 | bl_motion, 2026-11-24 실물 확인 | 분압 권장 |
 | D13 | 수동 부저 | 출력 | bl_motion, passive_buzzer | 내장 LED와 공유 |
 | A0 | 터치센서 | 입력 | bl_motion, touch_test | 눌림 HIGH |
 | A1 | LED 매트릭스 CLK | 출력 | bl_motion `CLK A1` | |

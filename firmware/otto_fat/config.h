@@ -16,6 +16,10 @@
 
 #define ARM_REST_L 90     // TODO(하드웨어 확인): 팔 내린 각도(요구사항 가정 90)
 #define ARM_REST_R 90     // TODO(하드웨어 확인)
+// 팔 방향: 명령 각도가 커지면 두 팔 모두 '손을 든다'로 통일. -1이면 서보에 (180 - 각도)를 쓴다.
+// 2026-11-24 실물: 왼팔은 각도↑=들기, 오른팔은 각도↑=내리기(좌우 대칭 장착) → 오른팔 반전
+#define ARM_DIR_L 1
+#define ARM_DIR_R -1
 
 // ---- 부저 / 매트릭스 ----
 #define PIN_BUZZER 13
@@ -48,13 +52,15 @@
 #define IMU_FAIL_LIMIT 3  // 연속 실패 시 비활성(e 5 0)
 // 축 매핑: 0=ax, 1=ay, 2=az. 실측(바로 선 상태) ax≈1850 ay≈-290 az≈17000.
 // pitch = atan2(A[PITCH], sqrt(A[ROLL]^2 + A[UP]^2)), roll = atan2(A[ROLL], A[UP])
-#define IMU_PITCH_AXIS 0
-#define IMU_ROLL_AXIS  1
+// 2026-11-24 실물: 좌우로 기울이면 pitch가 변함 → 센서 장착 방향이 90° 돌아가 있음. pitch=ay, roll=ax로 교체
+#define IMU_PITCH_AXIS 1
+#define IMU_ROLL_AXIS  0
 #define IMU_UP_AXIS    2
 #define IMU_PITCH_SIGN 1  // TODO(하드웨어 확인): 앞으로 기울일 때 pitch가 +인지
 #define IMU_ROLL_SIGN  1  // TODO(하드웨어 확인): 오른쪽/왼쪽 기울기 부호
-#define IMU_PITCH_OFFSET (-6)  // 실측 0점 +6° 보정 (원시 각도에 더한 뒤 SIGN을 곱함)
-#define IMU_ROLL_OFFSET  0
+// 원시 각도에 더한 뒤 SIGN을 곱함. 실측 0점 +6°는 ax축(축 교체 전 pitch) 값이므로 roll로 옮김
+#define IMU_PITCH_OFFSET 0
+#define IMU_ROLL_OFFSET  (-6)  // TODO(하드웨어 확인): 바로 선 상태 roll ±3° 이내인지
 
 // ---- 자동 반응 (behavior.md 3절) ----
 #define AUTO_DEFAULT 7            // 터치+장애물+넘어짐, & 가용 센서
@@ -82,5 +88,5 @@
 #define TELEM_MIN_MS 100
 #define TELEM_MOVING_MIN_MS 500
 #define BT_BAUD 9600
-#define PIN_BT_RX 11
-#define PIN_BT_TX 12
+#define PIN_BT_RX 11   // 모듈 TX → D11 (2026-11-24 실물 확인)
+#define PIN_BT_TX 12   // D12 → 모듈 RX (실물 확인. ref/블루투스 회로도.jpg의 D10/D11과 다름)
