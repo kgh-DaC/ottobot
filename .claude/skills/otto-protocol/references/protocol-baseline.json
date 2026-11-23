@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "transport": {
+    "baud": 9600,
+    "line_end": "\n",
+    "max_line": 48
+  },
+  "commands": [
+    { "name": "PING",    "token": "P", "args": [], "desc": "연결 확인. 응답으로 INFO를 보낸다." },
+    { "name": "STOP",    "token": "S", "args": [], "desc": "진행 중 동작을 멈추고 홈 자세. 다른 어떤 명령보다 우선한다." },
+    { "name": "MOVE",    "token": "M", "desc": "연속 동작. STOP이나 다른 MOVE가 올 때까지 한 주기씩 반복한다. id는 Otto_APP move 표.",
+      "args": [
+        { "name": "id",     "min": 0,   "max": 20 },
+        { "name": "period", "min": 400, "max": 3000, "default": 1000 },
+        { "name": "size",   "min": 5,   "max": 40,   "default": 15 }
+      ] },
+    { "name": "GESTURE", "token": "H", "args": [ { "name": "id", "min": 1, "max": 13 } ], "desc": "Otto 제스처 1회." },
+    { "name": "SING",    "token": "K", "args": [ { "name": "id", "min": 1, "max": 19 } ], "desc": "Otto 노래 1회." },
+    { "name": "TONE",    "token": "T", "desc": "부저 단음.",
+      "args": [ { "name": "freq", "min": 31, "max": 5000 }, { "name": "ms", "min": 10, "max": 2000 } ] },
+    { "name": "MOUTH",   "token": "L", "args": [ { "name": "id", "min": 0, "max": 30 } ], "desc": "미리 정의된 입모양." },
+    { "name": "MATRIX",  "token": "X", "desc": "8x8 전체 비트맵. row0이 맨 위, 각 행의 bit7이 왼쪽.",
+      "args": [
+        { "name": "r0", "min": 0, "max": 255 }, { "name": "r1", "min": 0, "max": 255 },
+        { "name": "r2", "min": 0, "max": 255 }, { "name": "r3", "min": 0, "max": 255 },
+        { "name": "r4", "min": 0, "max": 255 }, { "name": "r5", "min": 0, "max": 255 },
+        { "name": "r6", "min": 0, "max": 255 }, { "name": "r7", "min": 0, "max": 255 }
+      ] },
+    { "name": "TEXT",    "token": "W", "args": [ { "name": "text", "type": "str", "maxlen": 20 } ], "desc": "스크롤 텍스트(대문자·숫자)." },
+    { "name": "ARMS",    "token": "A", "desc": "팔 서보 각도.",
+      "args": [ { "name": "left", "min": 0, "max": 180 }, { "name": "right", "min": 0, "max": 180 } ] },
+    { "name": "SERVO",   "token": "G", "desc": "다리 서보 4개 직접 각도.",
+      "args": [
+        { "name": "yl", "min": 0, "max": 180 }, { "name": "yr", "min": 0, "max": 180 },
+        { "name": "rl", "min": 0, "max": 180 }, { "name": "rr", "min": 0, "max": 180 }
+      ] },
+    { "name": "TRIM",    "token": "C", "desc": "다리 트림 설정 후 EEPROM 저장.",
+      "args": [
+        { "name": "yl", "min": -90, "max": 90 }, { "name": "yr", "min": -90, "max": 90 },
+        { "name": "rl", "min": -90, "max": 90 }, { "name": "rr", "min": -90, "max": 90 }
+      ] },
+    { "name": "TELEM",   "token": "R", "args": [ { "name": "interval_ms", "min": 0, "max": 5000 } ], "desc": "주기 텔레메트리. 0이면 끈다. 100 미만(0 제외)은 100으로 올린다." },
+    { "name": "AUTO",    "token": "U", "args": [ { "name": "mask", "min": 0, "max": 15 } ], "desc": "자동 반응 비트: 1 터치 정지, 2 장애물 후퇴, 4 넘어짐 감지, 8 소리 반응." }
+  ],
+  "messages": [
+    { "name": "INFO",      "token": "i", "fields": ["proto", "fw_build", "sensors"], "desc": "sensors 비트: 1 MPU6050, 2 초음파 응답" },
+    { "name": "ACK",       "token": "a", "fields": ["cmd"], "desc": "명령 수신·검증 완료. 실행 전에 즉시 보낸다. cmd는 명령 토큰의 ASCII 코드." },
+    { "name": "DONE",      "token": "d", "fields": ["cmd"], "desc": "1회성 명령 실행 완료. 연속 MOVE는 멈출 때 보낸다." },
+    { "name": "ERR",       "token": "e", "fields": ["code", "cmd"], "desc": "cmd는 문제 명령의 ASCII 코드, 알 수 없으면 0." },
+    { "name": "TELEMETRY", "token": "t", "fields": ["dist_cm", "touch", "pitch", "roll", "sound", "state"] },
+    { "name": "EVENT",     "token": "v", "fields": ["kind", "value"] }
+  ],
+  "errors": [
+    { "name": "UNKNOWN_CMD",   "code": 1 },
+    { "name": "BAD_ARG",       "code": 2 },
+    { "name": "BUSY",          "code": 3 },
+    { "name": "LINE_TOO_LONG", "code": 4 },
+    { "name": "SENSOR_FAIL",   "code": 5 },
+    { "name": "FALLEN",        "code": 6 }
+  ],
+  "events": [
+    { "name": "TOUCH",    "code": 1 },
+    { "name": "OBSTACLE", "code": 2 },
+    { "name": "FALL",     "code": 3 },
+    { "name": "RECOVER",  "code": 4 },
+    { "name": "SOUND",    "code": 5 },
+    { "name": "BOOT",     "code": 6 }
+  ],
+  "states": [
+    { "name": "IDLE",    "code": 0 },
+    { "name": "MOVING",  "code": 1 },
+    { "name": "ACTION",  "code": 2 },
+    { "name": "FALLEN",  "code": 3 },
+    { "name": "AVOID",   "code": 4 }
+  ]
+}

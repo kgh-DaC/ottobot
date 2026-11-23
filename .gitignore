@@ -1,0 +1,11 @@
+# 로컬 설정
+.claude/settings.local.json
+# 대용량 참고 자료(원본은 ref/에 그대로 보관)
+ref/*.zip
+ref/*.gcode
+ref/*.3mf
+ref/*.pdf
+ref/*.jpg
+# 빌드 산출물
+build/
+__pycache__/

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Otto 컨트롤러</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>Otto 컨트롤러</h1>
+    <span class="sub">Otto DIY Fat · BLE otto2</span>
+  </div>
+  <div class="connbar" role="group" aria-label="연결">
+    <label class="sel">연결 방식
+      <select id="transport">
+        <option value="ble">블루투스 BLE (기본)</option>
+        <option value="serial">USB 시리얼 (디버그용)</option>
+        <option value="demo">데모 로봇 (하드웨어 없이)</option>
+      </select>
+    </label>
+    <label class="chk" id="showAllWrap" title="이름이 otto로 시작하지 않는 기기도 목록에 보여줍니다">
+      <input type="checkbox" id="showAll"> 모든 기기 보기
+    </label>
+    <button id="btnConnect" class="primary">연결</button>
+    <button id="btnReconnect" hidden>다시 연결</button>
+    <button id="btnDisconnect" disabled>연결 끊기</button>
+    <span id="connStatus" class="pill off" role="status" aria-live="polite">● 연결 안 됨</span>
+  </div>
+</header>
+
+<div id="banners" aria-live="polite"></div>
+
+<details class="help" id="connHelp">
+  <summary>연결이 안 될 때</summary>
+  <ol>
+    <li>로봇 전원을 켭니다. 블루투스 모듈 LED가 깜빡이면 연결을 기다리는 상태입니다.</li>
+    <li>"연결"을 누르고 목록에서 <b>otto2</b>를 고릅니다. 목록에 없으면 "모든 기기 보기"를 켜 보세요.</li>
+    <li>휴대폰이나 다른 PC가 otto2에 연결돼 있으면 먼저 끊으세요. BLE 모듈은 한 번에 하나만 연결됩니다.</li>
+    <li>Windows 설정의 블루투스 장치에 otto2를 "페어링"할 필요는 없습니다. 브라우저가 직접 연결합니다.</li>
+    <li>이 페이지는 <code>http://localhost:8000</code>처럼 로컬 서버로 열어야 합니다(파일을 더블클릭해 열면 블루투스가 막힙니다).</li>
+    <li>지원 브라우저: 데스크톱 Chrome/Edge, 안드로이드 Chrome. iPhone/iPad(Safari)는 지원하지 않습니다 — 데모 모드로 화면만 시험할 수 있습니다.</li>
+    <li>USB 시리얼은 디버그용입니다. 이 보드의 USB 칩은 같은 데이터를 반복해 보내는 문제가 있어, 같은 줄 반복은 자동으로 무시합니다. Arduino 시리얼 모니터를 닫고 연결하세요.</li>
+  </ol>
+  <p id="robotInfo" class="muted">로봇 정보: 연결 후 표시</p>
+</details>
+
+<button id="btnStop" class="estop" aria-keyshortcuts="Space">정지 <small>STOP · 스페이스바</small></button>
+
+<main class="grid">
+
+  <!-- 이동 -->
+  <section class="card" id="cardMove" aria-labelledby="hMove">
+    <h2 id="hMove">이동</h2>
+    <p class="muted small">방향 버튼을 누르고 있는 동안 움직이고, 떼면 멈춥니다. 키보드: 화살표 또는 W A S D.</p>
+    <div class="dpad" role="group" aria-label="방향 패드">
+      <span></span>
+      <button class="cmd servo dir" data-move="1" aria-label="전진">▲<small>전진</small></button>
+      <span></span>
+      <button class="cmd servo dir" data-move="3" aria-label="좌회전">◀<small>좌회전</small></button>
+      <button class="cmd servo" id="btnHome" aria-label="홈 자세">●<small>홈</small></button>
+      <button class="cmd servo dir" data-move="4" aria-label="우회전">▶<small>우회전</small></button>
+      <span></span>
+      <button class="cmd servo dir" data-move="2" aria-label="후진">▼<small>후진</small></button>
+      <span></span>
+    </div>
+    <div class="sliders">
+      <label>속도(한 주기) <output id="periodOut">1000 ms</output>
+        <input type="range" id="period" min="400" max="3000" step="50" value="1000">
+      </label>
+      <label>크기 <output id="sizeOut">15</output>
+        <input type="range" id="size" min="5" max="40" step="1" value="15">
+      </label>
+      <p class="muted small">값이 작을수록 빠릅니다. 움직이는 중에 바꾸면 다음 주기부터 적용됩니다.</p>
+    </div>
+    <h3>기타 동작 <span class="muted small">(누르면 정지할 때까지 반복)</span></h3>
+    <div class="btngrid" id="moreMoves"></div>
+    <p id="moveStatus" class="status-line" aria-live="polite">정지</p>
+  </section>
+
+  <!-- 센서 -->
+  <section class="card" id="cardSensors" aria-labelledby="hSensors">
+    <h2 id="hSensors">센서</h2>
+    <div class="sensor-grid">
+      <div class="sensor">
+        <div class="label">상태</div>
+        <div id="sState" class="big">—</div>
+      </div>
+      <div class="sensor">
+        <div class="label">터치</div>
+        <div id="sTouch" class="big">—</div>
+      </div>
+      <div class="sensor wide">
+        <div class="label">거리 (초음파)</div>
+        <div id="sDist" class="big">—</div>
+        <div class="meter" aria-hidden="true"><div id="sDistBar"></div></div>
+      </div>
+      <div class="sensor wide">
+        <div class="label">소리 (A6)</div>
+        <div id="sSound" class="big">—</div>
+        <div class="meter" aria-hidden="true"><div id="sSoundBar"></div></div>
+      </div>
+      <div class="sensor wide tilt">
+        <div class="label">기울기</div>
+        <div class="tilt-views">
+          <figure>
+            <svg viewBox="-50 -60 100 110" class="robot-svg" aria-hidden="true">
+              <line x1="-45" y1="40" x2="45" y2="40" class="ground"/>
+              <g id="tiltPitch"><rect x="-14" y="-40" width="28" height="28" rx="4"/><rect x="-10" y="-12" width="20" height="30" rx="3"/><rect x="-8" y="18" width="16" height="10"/><rect x="-14" y="28" width="28" height="10" rx="2"/></g>
+            </svg>
+            <figcaption>앞뒤(pitch) <b id="sPitch">—</b></figcaption>
+          </figure>
+          <figure>
+            <svg viewBox="-50 -60 100 110" class="robot-svg" aria-hidden="true">
+              <line x1="-45" y1="40" x2="45" y2="40" class="ground"/>
+              <g id="tiltRoll"><rect x="-20" y="-40" width="40" height="28" rx="4"/><rect x="-16" y="-12" width="32" height="30" rx="3"/><rect x="-26" y="-10" width="8" height="22" rx="3"/><rect x="18" y="-10" width="8" height="22" rx="3"/><rect x="-14" y="18" width="10" height="20"/><rect x="4" y="18" width="10" height="20"/></g>
+            </svg>
+            <figcaption>좌우(roll) <b id="sRoll">—</b></figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+    <label class="sel">텔레메트리 주기
+      <select id="telemInterval" class="cmd-any">
+        <option value="100">100 ms</option>
+        <option value="200" selected>200 ms</option>
+        <option value="250">250 ms</option>
+        <option value="500">500 ms</option>
+        <option value="1000">1초</option>
+        <option value="0">끔</option>
+      </select>
+    </label>
+    <p class="muted small">로봇이 움직이는 동안에는 최소 500ms로 느려집니다. 탭을 숨기면 자동으로 끕니다.</p>
+  </section>
+
+  <!-- 자동 반응 -->
+  <section class="card" id="cardAuto" aria-labelledby="hAuto">
+    <h2 id="hAuto">자동 반응</h2>
+    <div class="checks">
+      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="1"> 터치하면 정지</label>
+      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="2"> 장애물 앞에서 후퇴 <span class="why small" data-why="2"></span></label>
+      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="4"> 넘어짐 감지(서보 해제) <span class="why small" data-why="4"></span></label>
+      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="8"> 소리에 반응(입모양)</label>
+    </div>
+    <p id="autoNote" class="muted small">로봇이 실제로 적용한 값으로 표시됩니다.</p>
+  </section>
+
+  <!-- 표현 -->
+  <section class="card" id="cardExpr" aria-labelledby="hExpr">
+    <h2 id="hExpr">표현</h2>
+    <h3>제스처</h3>
+    <div class="btngrid" id="gestures"></div>
+    <h3>노래</h3>
+    <div class="btngrid" id="songs"></div>
+    <h3>입모양</h3>
+    <div class="btngrid mouths" id="mouths"></div>
+    <h3>글자 흐르기</h3>
+    <form id="textForm" class="row">
+      <input id="textIn" maxlength="9" placeholder="HELLO" autocomplete="off" aria-label="흐를 글자 (최대 9자)">
+      <button class="cmd" type="submit">보내기</button>
+    </form>
+    <p class="muted small">대문자 A–Z, 숫자, 공백, : ; &lt; = &gt; ? @ [ 만 표시됩니다(최대 9자).</p>
+    <h3>부저 단음</h3>
+    <form id="toneForm" class="row">
+      <label>주파수 <input type="number" id="toneFreq" min="31" max="5000" value="440"> Hz</label>
+      <label>길이 <input type="number" id="toneMs" min="10" max="2000" value="300"> ms</label>
+      <button class="cmd" type="submit">울리기</button>
+    </form>
+  </section>
+
+  <!-- 매트릭스 -->
+  <section class="card" id="cardMatrix" aria-labelledby="hMatrix">
+    <h2 id="hMatrix">LED 매트릭스 8×8</h2>
+    <p class="muted small">칸을 누르거나 끌어서 그립니다. 화면의 왼쪽 위 = 로봇 정면에서 본 왼쪽 위입니다.</p>
+    <div id="matrix" class="matrix" role="grid" aria-label="8x8 LED 편집기"></div>
+    <div class="row wrap">
+      <button id="mxClear" type="button">지우기</button>
+      <button id="mxInvert" type="button">반전</button>
+      <select id="mxPreset" aria-label="미리 만든 그림">
+        <option value="">그림 고르기…</option>
+      </select>
+      <button id="mxSend" class="cmd primary" type="button">로봇에 보내기</button>
+      <label class="chk"><input type="checkbox" id="mxLive"> 그리면서 바로 보내기</label>
+    </div>
+    <p class="mono small" id="mxBytes"></p>
+  </section>
+
+  <!-- 팔 -->
+  <section class="card" id="cardArms" aria-labelledby="hArms">
+    <h2 id="hArms">팔</h2>
+    <div class="sliders">
+      <label>왼팔 (D6) <output id="armLOut">90°</output>
+        <input type="range" id="armL" class="cmd servo" min="0" max="180" value="90">
+      </label>
+      <label>오른팔 (D7) <output id="armROut">90°</output>
+        <input type="range" id="armR" class="cmd servo" min="0" max="180" value="90">
+      </label>
+    </div>
+    <button id="armsHome" class="cmd servo" type="button">기본 자세(90°)</button>
+  </section>
+
+  <!-- 보정 -->
+  <section class="card" id="cardCalib" aria-labelledby="hCalib">
+    <h2 id="hCalib">보정</h2>
+    <h3>다리 트림 <span class="muted small">(로봇에서 읽은 값으로 시작)</span></h3>
+    <div class="trims" id="trims"></div>
+    <div class="row wrap">
+      <button id="trimPreview" class="cmd servo" type="button">미리보기(저장 안 함)</button>
+      <button id="trimSave" class="cmd servo primary" type="button">EEPROM에 저장</button>
+      <button id="trimRevert" class="cmd servo" type="button">저장된 값으로 되돌리기</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="trimLive"> 값을 바꾸면 바로 미리보기</label>
+    <p id="trimNote" class="muted small">저장된 값: —</p>
+    <h3>다리 서보 직접 각도 <span class="muted small">(트림 적용 전, 90 = 홈)</span></h3>
+    <div class="sliders" id="servos"></div>
+    <div class="row wrap">
+      <button id="servoSend" class="cmd servo" type="button">각도 보내기</button>
+      <button id="servoHome" class="cmd servo" type="button">모두 90°</button>
+    </div>
+  </section>
+
+  <!-- 데모 패널 -->
+  <section class="card demo" id="cardDemo" aria-labelledby="hDemo" hidden>
+    <h2 id="hDemo">데모 로봇 조작</h2>
+    <p class="muted small">가상 로봇의 "주변 세계"를 바꿉니다. 실제 펌웨어 규칙대로 반응합니다.</p>
+    <div class="row wrap">
+      <button id="dmTouch" type="button">터치 (누르고 있기)</button>
+      <button id="dmFall" type="button">앞으로 넘어뜨리기</button>
+      <button id="dmFallSide" type="button">옆으로 넘어뜨리기</button>
+      <button id="dmStand" type="button">바로 세우기</button>
+      <button id="dmLoud" type="button">큰 소리</button>
+    </div>
+    <label>장애물 거리 <output id="dmDistOut">120 cm</output>
+      <input type="range" id="dmDist" min="2" max="200" value="120">
+    </label>
+    <div class="row wrap">
+      <label class="chk"><input type="checkbox" id="dmRadio"> 전파 끊김 흉내(통신 감시 시험)</label>
+      <label class="chk"><input type="checkbox" id="dmUltra"> 초음파 있음</label>
+      <label class="chk"><input type="checkbox" id="dmMpu" checked> MPU6050 있음</label>
+      <button id="dmReboot" type="button">재부팅</button>
+    </div>
+    <div class="demo-view">
+      <div id="dmMatrix" class="matrix mini" aria-hidden="true"></div>
+      <dl id="dmInfo" class="small"></dl>
+    </div>
+  </section>
+
+  <!-- 로그 -->
+  <section class="card log-card" id="cardLog" aria-labelledby="hLog">
+    <h2 id="hLog">로그</h2>
+    <div class="row wrap">
+      <label class="chk"><input type="checkbox" id="logTelem"> 텔레메트리도 표시</label>
+      <label class="chk"><input type="checkbox" id="logKeep" checked> keepalive 표시</label>
+      <button id="logClear" type="button">지우기</button>
+    </div>
+    <ol id="log" class="log" aria-live="off"></ol>
+  </section>
+</main>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+
+<script>
+  // file:// 로 열면 ES 모듈이 막혀 아무 버튼도 동작하지 않는다 → 안내만 띄운다.
+  if (location.protocol === 'file:') {
+    document.getElementById('banners').innerHTML =
+      '<div class="banner bad"><b>파일을 직접 열었습니다.</b> 이 방식으로는 블루투스·USB·스크립트가 막힙니다. ' +
+      '명령 프롬프트에서 프로젝트 폴더로 가서 <code>python -m http.server 8000 -d web</code>를 실행하고 ' +
+      'Chrome/Edge에서 <code>http://localhost:8000</code>을 여세요.</div>';
+  }
+</script>
+<noscript><div class="banner bad">이 페이지는 JavaScript가 필요합니다.</div></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

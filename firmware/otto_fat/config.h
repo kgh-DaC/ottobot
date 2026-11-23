@@ -1,0 +1,86 @@
+// config.h - 사용자가 바꿀 값(핀, 임계값, 축 매핑, 기본 각도)은 모두 여기에.
+// 핀 근거: otto-hardware 스킬 핀 표 + 2026-11-24 실물 진단, ref/bl_motion/bl_motion.ino
+#pragma once
+#include <Arduino.h>
+
+#define FW_BUILD 1
+
+// ---- 서보 (실물 확인 완료) ----
+#define PIN_YL 2          // 왼다리
+#define PIN_YR 3          // 오른다리
+#define PIN_RL 4          // 왼발목
+#define PIN_RR 5          // 오른발목
+#define PIN_ARM_L 6       // 왼팔 (실물 확인)
+#define PIN_ARM_R 7       // 오른팔 (실물 확인)
+#define LOAD_TRIM_EEPROM true   // EEPROM 0~3 = Otto 트림(YL -10). 다른 용도로 쓰지 않는다
+
+#define ARM_REST_L 90     // TODO(하드웨어 확인): 팔 내린 각도(요구사항 가정 90)
+#define ARM_REST_R 90     // TODO(하드웨어 확인)
+
+// ---- 부저 / 매트릭스 ----
+#define PIN_BUZZER 13
+#define PIN_MTX_DIN A3
+#define PIN_MTX_CS  A2
+#define PIN_MTX_CLK A1
+#define MTX_ORIENTATION 1
+#define MTX_INTENSITY 1
+// 실물 확인: Orientation 1에서 setLed(0,0)=정면 왼쪽 위, y=0=맨 위 행.
+// MATRIX r0=맨 위 행, bit7=왼쪽 칸 → setLed(x, y, bit(7-x) of r[y]). 반전이 필요하면 1.
+#define MTX_FLIP_X 0
+#define MTX_FLIP_Y 0
+#define TEXT_SCROLL_SPEED 80
+
+// ---- 센서 ----
+#define PIN_TOUCH A0      // 눌림 HIGH
+#define PIN_TRIG 8
+#define PIN_ECHO 9
+#define PIN_SOUND A6      // 아날로그 전용
+
+#define TOUCH_RESAMPLE_N 3      // 디바운스: 처음 본 순간 10ms 간격 3회 재샘플(총 30ms), 모두 같으면 확정
+#define TOUCH_RESAMPLE_MS 10
+#define US_INTERVAL_MS 60
+#define US_TIMEOUT_US 25000UL
+#define US_BOOT_TRIES 5   // 부팅 감지: 5회 모두 0이면 부재
+
+#define IMU_ADDR 0x68
+#define IMU_INTERVAL_MS 20
+#define IMU_GAP_RESET_MS 60   // 샘플 간격이 이보다 길면(블로킹 뒤) 필터를 새 값으로 초기화
+#define IMU_FAIL_LIMIT 3  // 연속 실패 시 비활성(e 5 0)
+// 축 매핑: 0=ax, 1=ay, 2=az. 실측(바로 선 상태) ax≈1850 ay≈-290 az≈17000.
+// pitch = atan2(A[PITCH], sqrt(A[ROLL]^2 + A[UP]^2)), roll = atan2(A[ROLL], A[UP])
+#define IMU_PITCH_AXIS 0
+#define IMU_ROLL_AXIS  1
+#define IMU_UP_AXIS    2
+#define IMU_PITCH_SIGN 1  // TODO(하드웨어 확인): 앞으로 기울일 때 pitch가 +인지
+#define IMU_ROLL_SIGN  1  // TODO(하드웨어 확인): 오른쪽/왼쪽 기울기 부호
+#define IMU_PITCH_OFFSET (-6)  // 실측 0점 +6° 보정 (원시 각도에 더한 뒤 SIGN을 곱함)
+#define IMU_ROLL_OFFSET  0
+
+// ---- 자동 반응 (behavior.md 3절) ----
+#define AUTO_DEFAULT 7            // 터치+장애물+넘어짐, & 가용 센서
+#define FALL_DEG 60
+#define FALL_HOLD_MS 300          // IDLE 등: 필터 값이 60° 초과 300ms 지속
+#define FALL_MOVING_SAMPLES 2     // MOVING/AVOID: 주기 끝 원시 샘플이 60° 초과 2회 연속 (behavior.md와 다름, QA fw_4)
+#define FALL_INSTANT_DEG 75       // MOVING/AVOID: 원시 샘플 하나가 75° 초과면 즉시 (behavior.md와 다름)
+#define TOUCH_BEEP_HZ 1500        // 터치 정지 신호음 (비블로킹 tone)
+#define TOUCH_BEEP_MS 80
+#define RECOVER_DEG 25
+#define RECOVER_HOLD_MS 1000
+#define OBST_TRIGGER_CM 10
+#define OBST_RELEASE_CM 15
+#define AVOID_STEPS 2             // 가정: 뒤로 2걸음
+#define AVOID_PERIOD 1000
+#define SOUND_THRESHOLD 70        // 가정: 배경 51~54
+#define SOUND_COOLDOWN_MS 2000
+#define SOUND_AFTER_MOTION_MS 500
+#define SOUND_FACE_MS 1000
+#define FALL_MOUTH 26             // xMouth (가정)
+
+#define MOVE_WATCHDOG_MS 1500
+#define MOVE_LOCKOUT_MS 1000     // 자동 정지(터치·장애물 후퇴 끝·watchdog) 직후 MOVE 거부(e 3 77) 시간
+#define SERVO_MOVE_MS 300
+#define TELEM_MIN_MS 100
+#define TELEM_MOVING_MIN_MS 500
+#define BT_BAUD 9600
+#define PIN_BT_RX 11
+#define PIN_BT_TX 12
