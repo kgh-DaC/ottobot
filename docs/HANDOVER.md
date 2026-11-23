@@ -1,7 +1,7 @@
 # Otto Fat 로봇 프로젝트 인수인계 문서
 
 - 작성일: 2026-11-24
-- 상태: **개발 완료 · 통합 QA 통과 · 펌웨어 업로드 완료(2026-11-24) · 하드웨어 시험 전**
+- 상태: **개발 완료 · 통합 QA 통과 · 펌웨어 업로드 완료 · 하드웨어 시험 1~2번 통과, 3번(BLE 연결)부터 진행 예정** (2026-11-24 갱신)
 - 다음에 할 일: [6. 다음 단계](#6-다음-단계)부터 읽으면 된다.
 
 ---
@@ -114,7 +114,7 @@ python .claude/skills/otto-firmware/scripts/compile.py --sketch firmware/otto_fa
 ## 6. 다음 단계
 
 1. ~~펌웨어 업로드~~ — 2026-11-24 완료.
-2. **`docs/hardware-test.md`를 순서대로 진행.** 로봇을 받침 위에 올려 두고 시작한다. 특히 확인할 것:
+2. **`docs/hardware-test.md`를 순서대로 진행.** 1·2번(업로드·부팅)은 완료(아래 작업 기록 참고), **3번(BLE 연결)부터** 이어서 하면 된다. 로봇을 받침 위에 올려 두고 시작한다. 특히 확인할 것:
    - BLE 서비스 UUID: 연결 후 웹 로그에서 확인. "UART 특성을 찾지 못했습니다"가 나오면 로그의 UUID를 `web/js/ble-transport.js`의 `UART_CANDIDATES`에 추가.
    - 기울기 부호: 앞으로 기울였을 때 pitch가 +가 아니면 `config.h`의 `IMU_PITCH_SIGN`을 −1로.
    - 팔 기본 각도: 90°가 팔을 내린 자세가 아니면 `ARM_REST_L/R` 조정.
@@ -167,5 +167,15 @@ python .claude/skills/otto-firmware/scripts/compile.py --sketch firmware/otto_fa
 | otto-integration-qa | 통합 검증(코드 수정 안 함) | sonnet |
 
 스킬: `otto-orchestrator`(조율), `otto-hardware`(하드웨어 사실·진단 결과), `otto-protocol`(규약·생성·계약 검사), `otto-firmware`, `otto-web`, `otto-qa`. 변경 이력은 `CLAUDE.md`.
+
+---
+
+## 10. 작업 기록 (세션별)
+
+| 날짜 | 작업 | 결과 |
+|------|------|------|
+| 2026-11-24 | 업로드 후 재점검: 생성물 일치, 계약 검사, protocol.js 시험, USB 부팅·PING 확인 | 모두 정상. 생성물 일치, 계약 오류 0·경고 0, protocol.js 224/0. 부팅 `# Otto fat fw 1 proto 1 \| IMU ok(0x68) \| US none \| touch 0 \| auto 5`, PING `a 80 / i 1 1 1 5 / c -10 0 0 0 / d 80`. 이번에는 터치 이벤트가 따로 들어오지 않았다(지난번 `v 1 1`은 실제로 만진 것이었을 가능성이 높다. 6번 시험에서 다시 확인). 하드웨어 시험 1·2번 통과, 3번부터 사람이 로봇 앞에서 진행해야 함 |
+
+**규칙:** 작업을 마칠 때마다 이 문서의 상태 줄과 작업 기록을 갱신한다.
 
 **규칙:** `protocol.h`와 `web/js/protocol.js`는 직접 고치지 않는다. 명령을 바꿀 때는 `protocol/protocol.json`을 고치고 생성 스크립트를 돌린 뒤 펌웨어와 웹을 **둘 다** 맞춘다.
