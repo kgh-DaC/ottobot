@@ -108,6 +108,12 @@ input[type=number] { width: 6em; }
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
+/* 블록 배치(js/layout.js): 카드마다 자기 높이만큼만 차지하고, 빈칸은 뒤의 짧은 카드로 채운다 */
+.grid.masonry { grid-auto-rows: 4px; row-gap: 0; grid-auto-flow: row dense; align-items: start; }
+.twin { width: 100%; height: 340px; border-radius: 8px; overflow: hidden; touch-action: none;
+  background: radial-gradient(ellipse at 50% 30%, #2b3446, #141922); }
+.twin canvas { display: block; width: 100% !important; height: 100% !important; }
+.twin.twin-missing { height: auto; padding: 12px; color: #e7eaf0; }
 .card.demo { border-style: dashed; border-color: var(--warn); }
 .log-card { grid-column: 1 / -1; }
 .pin-card { grid-column: 1 / -1; }

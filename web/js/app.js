@@ -11,6 +11,8 @@ import { initExpress } from './ui-express.js';
 import { initCalib } from './ui-calib.js';
 import { initDemoPanel } from './ui-demo.js';
 import { initPins } from './ui-pins.js';
+import { initTwin } from './ui-twin.js';
+import { initMasonry } from './layout.js';
 
 const link = new Link();
 const transports = { ble: null, serial: null, demo: null };
@@ -486,8 +488,11 @@ initSensors(ctx);
 initExpress(ctx);
 initCalib(ctx);
 initPins();
+let twin = null;
+try { twin = initTwin(ctx); } catch (e) { console.error('3D 형상 초기화 실패', e); }
+initMasonry($('#cards'));
 setConnUi('off');
 refreshControls();
 updateMoveStatus();
 // 디버그용: 브라우저 콘솔에서 otto.link 등으로 접근
-window.otto = { link, robot, ctx, MSG };
+window.otto = { link, robot, ctx, MSG, twin };

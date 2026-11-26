@@ -32,8 +32,14 @@ web/
     ├── link.js            공통: 줄 단위 송수신, 명령 큐·ACK 대기
     ├── demo-robot.js      가상 로봇: transport와 같은 인터페이스, 프로토콜대로 응답·텔레메트리 생성
     ├── app.js             UI 상태와 이벤트 연결
-    └── matrix-editor.js   8x8 편집기 (행 바이트 ↔ 픽셀)
+    ├── matrix-editor.js   8x8 편집기 (행 바이트 ↔ 픽셀)
+    ├── ui-twin.js         3D 형상(three.js): link 'tx'(보낸 명령)로 다리·팔·LED, 텔레메트리로 기울기·거리·터치·넘어짐
+    └── layout.js          카드 블록(메이슨리) 배치: 카드마다 grid-row-end: span N, 빈칸은 dense로 채움
+web/vendor/three-r160-bundle.js   three.js r160 + OrbitControls 로컬 묶음(SMARS 트윈과 같은 파일, window.SMARS_THREE). 외부 CDN 금지 원칙의 예외가 아니라 로컬 파일
 ```
+
+- 3D 형상의 다리 움직임은 근사다: 로봇은 서보 각도를 보내지 않으므로 MOVE 번호별로 Otto.cpp의 진동자 값(A·O·위상차)을 웹에서 재현한다. 입모양 비트맵은 Otto_mouths.h Mouthtable(6x5, 행렬 y 3~7·x 1~6)을 쓴다. 팔은 명령 각도↑ = 들기, 90 = 내림(펌웨어 ARM_DIR 반영 뒤 의미)을 옆으로 드는 모습으로 그린다.
+- `web/js/*.js`를 고치면 `python tools/build_web_bundle.py`로 bundle.js를 다시 만든다.
 
 외부 CDN·프레임워크를 쓰지 않는다. 로봇 앞에서 인터넷이 없어도 열려야 하기 때문이다.
 

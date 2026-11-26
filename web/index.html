@@ -48,7 +48,18 @@
 
 <button id="btnStop" class="estop" aria-keyshortcuts="Space">정지 <small>처음 자세로 · 스페이스바</small></button>
 
-<main class="grid">
+<main class="grid" id="cards">
+
+  <!-- 3D 형상 -->
+  <section class="card twin-card" id="cardTwin" aria-labelledby="hTwin">
+    <h2 id="hTwin">3D 로봇 <span class="muted small">(끌어서 돌리기 · 휠로 확대)</span></h2>
+    <div id="twin" class="twin" role="img" aria-label="Otto 3D 형상: 보낸 명령과 센서 값에 따라 움직입니다"></div>
+    <div class="row wrap">
+      <button id="twinReset" type="button">시점 초기화</button>
+      <span id="twinNote" class="muted small" aria-live="off"></span>
+    </div>
+    <p class="muted small">다리·팔 움직임은 보낸 명령으로 계산한 근사이고, 기울기·거리·터치·넘어짐은 로봇 센서 값입니다. LED는 보낸 입모양·그림·글자를 보여 줍니다.</p>
+  </section>
 
   <!-- 이동 -->
   <section class="card" id="cardMove" aria-labelledby="hMove">
@@ -277,6 +288,8 @@
 <noscript><div class="banner bad">이 페이지는 JavaScript가 필요합니다.</div></noscript>
 <!-- 더블클릭(file://)으로 열어도 동작하도록 모듈을 묶은 생성물을 일반 스크립트로 불러온다.
      원본은 js/*.js, 고친 뒤 python tools/build_web_bundle.py 로 다시 생성 -->
+<!-- three.js r160 + OrbitControls 로컬 묶음(SMARS 트윈과 같은 파일, 인터넷 불필요). 3D 카드에서만 쓴다 -->
+<script src="vendor/three-r160-bundle.js"></script>
 <script src="js/bundle.js"></script>
 </body>
 </html>

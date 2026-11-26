@@ -207,3 +207,4 @@ python .claude/skills/otto-firmware/scripts/compile.py --sketch firmware/otto_fa
 **규칙:** 작업을 마칠 때마다 이 문서의 상태 줄과 작업 기록을 갱신한다.
 
 **규칙:** `protocol.h`와 `web/js/protocol.js`는 직접 고치지 않는다. 명령을 바꿀 때는 `protocol/protocol.json`을 고치고 생성 스크립트를 돌린 뒤 펌웨어와 웹을 **둘 다** 맞춘다.
+| 2026-11-26 | **웹: 3D 로봇 카드 + 블록 배치.** `web/js/ui-twin.js`(three.js r160 로컬 묶음 `web/vendor/`, SMARS 트윈과 같은 파일): 보낸 명령으로 다리(MOVE 번호별 Otto.cpp 진동자 근사)·팔·LED(입모양 Mouthtable·MATRIX·TEXT), 텔레메트리로 기울기·거리 콘·터치·넘어짐 표시, 이동 시 바닥 격자가 흘러 방향 표시. `web/js/layout.js`: 카드 높이별 블록(메이슨리) 배치로 짧은 카드가 긴 카드 옆 빈칸을 채움. 헤드리스 Edge 데모 연결 시험(걷기·팔·입모양 하트·넘어짐, 콘솔 오류 0) | protocol.js 224/0, 계약 0, 번들 일치. 실물 연결에서 팔 방향(옆으로 드는지 앞으로 드는지) 확인 필요 |
