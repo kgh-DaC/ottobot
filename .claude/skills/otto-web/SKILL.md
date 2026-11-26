@@ -12,7 +12,7 @@ description: "Otto 로봇을 BLE 블루투스 모듈 otto2(Web Bluetooth API, �
 - 로봇의 블루투스 모듈 `otto2`는 **BLE UART 모듈**이다(2026-11-24 실측, `otto-hardware` 참고). 클래식 SPP가 아니므로 COM 포트가 생기지 않는다. ref의 OttoWebAppControl과 같은 방식이다.
 - 기본 연결은 **Web Bluetooth API**: `navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'otto' }, { namePrefix: 'OTTO' }], optionalServices: [0xFFE0, ...후보] })` → GATT 연결 → UART 특성에 `startNotifications()` + `writeValueWithoutResponse()`.
   - HM-10/CC2541 계열은 서비스 `0xFFE0` / 특성 `0xFFE1` 하나로 송수신한다. 다른 계열(HC-08 등, Nordic UART `6e400001-b5a3-f393-e0a9-e50e24dcca9e`)도 후보로 넣고, 연결 후 실제 서비스·특성 목록을 로그에 남긴다.
-  - 쓰기는 **20바이트 단위로 나눠** 순서대로 보낸다. 수신 notify는 조각이므로 버퍼에 이어 붙여 `\n`으로 자른다.
+  - 쓰기는 **16바이트 단위로 나눠** 순서대로 보낸다(otto2 모듈은 17B 이상 한 번에 쓰면 멈춤 — otto-hardware 참고). 수신 notify는 조각이므로 버퍼에 이어 붙여 `\n`으로 자른다.
   - `gattserverdisconnected` 이벤트로 끊김을 감지하고 재연결 버튼을 보여준다.
   - 지원: 데스크톱 Chrome/Edge, 안드로이드 Chrome. iOS Safari 미지원. `'bluetooth' in navigator`로 기능 감지하고, 없으면 안내 문구와 함께 **데모 모드**를 권한다.
 - 보조 연결: **USB Web Serial**(디버그용). 이 로봇의 FTDI 호환칩은 유휴 시 이전 데이터를 반복 전달하는 드라이버 문제가 있다 → USB 경로에서는 같은 줄이 짧은 시간에 반복되면 무시하는 방어 로직을 두고, 화면에 "USB는 디버그용"이라고 안내한다.
@@ -27,7 +27,7 @@ web/
 ├── css/style.css
 └── js/
     ├── protocol.js        생성물 — 직접 수정 금지
-    ├── ble-transport.js   Web Bluetooth(BLE UART) 연결, 20B 분할 쓰기, notify 조각 조립
+    ├── ble-transport.js   Web Bluetooth(BLE UART) 연결, 16B 분할 쓰기, notify 조각 조립
     ├── serial-transport.js  USB Web Serial (디버그용, 중복 줄 방어)
     ├── link.js            공통: 줄 단위 송수신, 명령 큐·ACK 대기
     ├── demo-robot.js      가상 로봇: transport와 같은 인터페이스, 프로토콜대로 응답·텔레메트리 생성

@@ -53,6 +53,9 @@ static void feed(uint8_t idx, uint8_t portMask, int c, LineHandler h) {
   lb.buf[lb.len++] = (char)c;
 }
 
+// SoftwareSerial은 반이중: 송신 중 들어온 바이트는 깨진다. 덜 받은 줄이 있으면 텔레메트리를 미룬다(2026-11-24 실측 손실 15%).
+bool comms_btRxBusy() { return s_lb[0].len || BT.available(); }
+
 void comms_poll(LineHandler h) {
   // 도착해 있는 바이트를 모두 읽는다. 블로킹 명령이 끼어도 끝난 뒤 이어서 읽는다.
   // 재진입 금지: 핸들러 안에서 다시 poll하면 같은 줄 버퍼를 덮어쓴다. loop() 한 지점에서만 부른다.
@@ -108,7 +111,7 @@ bool comms_parseArgs(char* line, bool strMode) {
 }
 
 static void writeTo(uint8_t dest, const char* s, uint8_t n) {
-  if (dest & PORT_BT) BT.write((const uint8_t*)s, n);
+  if (dest & PORT_BT) { BT.write((const uint8_t*)s, n); delay(BT_LINE_GAP_MS); }
   if (dest & PORT_USB) Serial.write((const uint8_t*)s, n);
 }
 

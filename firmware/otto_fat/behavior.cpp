@@ -5,6 +5,7 @@
 #include "sensors.h"
 #include "motion.h"
 #include "face.h"
+#include "commands.h"
 
 uint8_t g_state = ST_IDLE;
 uint8_t g_movePort = PORT_BT;
@@ -167,6 +168,9 @@ void behavior_safety() {
       if (wasMoving) comms_done(CMD_MOVE, g_movePort);
       tone(PIN_BUZZER, TOUCH_BEEP_HZ, TOUCH_BEEP_MS);   // 짧은 비블로킹 신호음
       touchStopped = true;
+    } else if (!fallen && (s_auto & AUTO_TOUCH) && g_state == ST_IDLE) {
+      // 멈춰 있을 때 터치 → 인사(기쁨 제스처 + HELLO). 블로킹 약 5초, 그동안 명령은 버퍼에서 기다린다
+      commands_greet();
     }
   }
 
@@ -232,6 +236,7 @@ void behavior_telemetry() {
   if (g_state == ST_MOVING && iv < TELEM_MOVING_MIN_MS) iv = TELEM_MOVING_MIN_MS;
   unsigned long now = millis();
   if (now - s_telemLast < iv) return;
+  if ((g_activePort & PORT_BT) && comms_btRxBusy()) return;   // 명령 수신 중 → 다음 loop에 다시
   s_telemLast = now;
   int16_t v[MSG_TELEMETRY_FIELDS] = {
     sensors_distance(), (int16_t)sensors_touch(), sensors_pitch(), sensors_roll(),

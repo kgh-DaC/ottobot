@@ -1,4 +1,4 @@
-// USB Web Serial transport — 디버그용 보조 경로.
+// USB Web Serial transport — BLE와 같은 프로토콜로 조종하는 USB 케이블 경로.
 // 이 로봇의 FTDI 호환칩은 로봇이 조용할 때 드라이버가 마지막 데이터를 반복해서 돌려준다(otto-hardware 참고).
 // 그래서 같은 줄이 짧은 간격으로 반복되면 버리고, 9600bps로 불가능한 수신량이면 경고한다.
 import { BAUD } from './protocol.js';
@@ -6,7 +6,7 @@ import { LineSplitter } from './line-splitter.js';
 
 const DUP_WINDOW_MS = 80;       // 같은 줄이 이 시간 안에 다시 오면 중복으로 본다(9600bps에서 24B 줄 ≈ 25ms)
 const MAX_REAL_BPS = 1100;      // 9600bps 8N1 이론값 960B/s + 여유
-const BOOT_WAIT_MS = 1800;      // 포트를 열면 Nano가 리셋된다(DTR). 부트로더를 기다린다.
+const BOOT_WAIT_MS = 3200;      // 포트를 열면 Nano가 리셋된다(DTR). 실측 부팅(부트로더+홈+부팅음) 약 3.0초
 
 export function serialSupported() {
   return typeof navigator !== 'undefined' && 'serial' in navigator;
@@ -42,7 +42,7 @@ export class SerialTransport {
 
   async connect({ reuse = false } = {}) {
     if (!serialSupported()) {
-      throw new Error('이 브라우저는 Web Serial을 지원하지 않습니다. 데스크톱 Chrome/Edge를 쓰세요(USB는 디버그용입니다).');
+      throw new Error('이 브라우저는 Web Serial을 지원하지 않습니다. 데스크톱 Chrome/Edge를 쓰세요.');
     }
     if (!reuse || !this.port || this._unplugged) {
       this._unplugged = false;

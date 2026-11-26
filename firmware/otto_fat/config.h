@@ -20,6 +20,7 @@
 // 2026-11-24 실물: 왼팔은 각도↑=들기, 오른팔은 각도↑=내리기(좌우 대칭 장착) → 오른팔 반전
 #define ARM_DIR_L 1
 #define ARM_DIR_R -1
+#define ARM_DETACH_MS 500 // 팔 각도를 쓴 뒤 이 시간이 지나면 신호를 끊는다. 계속 붙여 두면 SoftwareSerial(BT) 송수신 때 서보 펄스가 흔들려 팔이 떤다(2026-11-24)
 
 // ---- 부저 / 매트릭스 ----
 #define PIN_BUZZER 13
@@ -70,6 +71,10 @@
 #define FALL_INSTANT_DEG 75       // MOVING/AVOID: 원시 샘플 하나가 75° 초과면 즉시 (behavior.md와 다름)
 #define TOUCH_BEEP_HZ 1500        // 터치 정지 신호음 (비블로킹 tone)
 #define TOUCH_BEEP_MS 80
+// 멈춰 있을 때(IDLE) 터치하면 인사 (AUTO 1, 2026-11-26 사용자 요청): 제스처(프로토콜 id, 1 = 기쁨 OttoHappy)
+// → 글자 흐르기 → 다리 원위치(홈)
+#define TOUCH_GREET_GESTURE 1
+#define TOUCH_GREET_TEXT "HELLO"
 #define RECOVER_DEG 25
 #define RECOVER_HOLD_MS 1000
 #define OBST_TRIGGER_CM 10
@@ -89,4 +94,5 @@
 #define TELEM_MOVING_MIN_MS 500
 #define BT_BAUD 9600
 #define PIN_BT_RX 11   // 모듈 TX → D11 (2026-11-24 실물 확인)
+#define BT_LINE_GAP_MS 20   // BT로 한 줄 보낸 뒤 쉬는 시간. 연속 4줄(PING 응답)을 몰아 보내면 BLE 모듈이 연결을 끊음(2026-11-24 진단)
 #define PIN_BT_TX 12   // D12 → 모듈 RX (실물 확인. ref/블루투스 회로도.jpg의 D10/D11과 다름)

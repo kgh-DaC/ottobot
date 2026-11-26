@@ -15,6 +15,7 @@ void motion_arms(int16_t l, int16_t r);
 void motion_servos(const int16_t* t);   // 다리 4개 논리 각도, SERVO_MOVE_MS 보간
 void motion_setTrims(const int16_t* t, bool save); // 적용 후 홈
 const int16_t* motion_trims();
+void motion_rehome();              // 쉬는 상태와 상관없이 다리 홈 + 팔 기본 (터치 인사 끝)
 void motion_gesture(uint8_t id);   // 프로토콜 id 1~13
 void motion_sing(uint8_t id);      // 프로토콜 id 1~19 (표로 변환)
 void motion_singLib(uint8_t libSong); // 라이브러리 상수 S_* 직접 (내부 신호음)
@@ -22,5 +23,6 @@ void motion_backStep();
 void motion_detachAll();
 void motion_attachAll();             // attach + 홈 (회복)
 bool motion_isForward(uint8_t id);   // 장애물 후퇴 대상(전진 계열)
+void motion_tick();                  // loop마다: 팔 각도 유지 시간이 지나면 detach (떨림 방지)
 void motion_markEnd();               // 부저 등 동작 외 소리 종료 시각 기록
 unsigned long motion_lastEnd();      // 마지막 서보 동작 종료 시각 (소리 쿨다운)

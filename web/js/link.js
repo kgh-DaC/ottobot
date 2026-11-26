@@ -26,6 +26,8 @@ const FORWARD_IDS = new Set([1, 9, 12]);
 
 export const ACK_TIMEOUT_MS = 1500;
 const DONE_TIMEOUT_MS = 30000;
+// 멈춰 있을 때 터치 → 로봇이 인사(기쁨 제스처 → HELLO 흐르기 → 원위치, 약 6.5초 블로킹). 그동안 보낸 줄은 늦게 읽힌다
+const TOUCH_GREET_MS = 8000;
 const BLOCKING = new Set(['GESTURE', 'SING', 'TEXT', 'SERVO', 'TRIM']);
 const code = (name) => CMD[name].token.charCodeAt(0);
 const CODE_MOVE = code('MOVE');
@@ -297,7 +299,8 @@ export class Link {
   _ackTimeout() {
     // MOVE 한 주기 동안 펌웨어는 줄을 읽지 못한다 → 주기만큼 더 기다린다.
     const moving = this.hold || this.moveLive || this.robotState === ST.MOVING || this.robotState === ST.AVOID;
-    return ACK_TIMEOUT_MS + (moving ? Math.max(this.movePeriod, this.robotState === ST.AVOID ? 1000 : 0) : 0);
+    const greet = Math.max(0, (this.greetUntil ?? 0) - performance.now());
+    return ACK_TIMEOUT_MS + greet + (moving ? Math.max(this.movePeriod, this.robotState === ST.AVOID ? 1000 : 0) : 0);
   }
 
   _pump() {
@@ -345,6 +348,7 @@ export class Link {
       case 'DONE': this._onDone(msg.fields.cmd); break;
       case 'ERR': this._onErr(msg.fields.code, msg.fields.cmd); break;
       case 'TELEMETRY':
+        this.greetUntil = 0;
         if (this.avoidActive && msg.fields.state !== ST.AVOID) { this.avoidActive = false; this._startLock(); }
         this.robotState = msg.fields.state;
         break;
@@ -355,6 +359,10 @@ export class Link {
           (this.hold || this.moveLive || this.avoidActive)) {
           this.avoidActive = false;
           this._autoStopped('TOUCH');
+        } else if (msg.fields.kind === EVT.TOUCH && (this.autoMask == null || (this.autoMask & 1)) &&
+          !this.fallStop && !this._robotBlocked() && (this.robotState == null || this.robotState === ST.IDLE)) {
+          this.greetUntil = performance.now() + TOUCH_GREET_MS; // 인사가 끝나 텔레메트리가 오면 지운다
+          this._emit('greet');
         }
         // 장애물 후퇴 진입: 뒤따르는 d 77 전에 keepalive를 끊고, 후퇴(2걸음+홈) 끝까지 잠금으로 본다
         if (msg.fields.kind === EVT.OBSTACLE && this.autoMask != null && (this.autoMask & 2) && this.moveLive &&

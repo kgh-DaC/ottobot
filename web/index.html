@@ -10,13 +10,13 @@
 <header class="topbar">
   <div class="brand">
     <h1>Otto 컨트롤러</h1>
-    <span class="sub">Otto DIY Fat · BLE otto2</span>
+    <span class="sub">Otto DIY Fat · BLE OTTO2/OTTO3</span>
   </div>
   <div class="connbar" role="group" aria-label="연결">
     <label class="sel">연결 방식
       <select id="transport">
         <option value="ble">블루투스 BLE (기본)</option>
-        <option value="serial">USB 시리얼 (디버그용)</option>
+        <option value="serial">USB 케이블</option>
         <option value="demo">데모 로봇 (하드웨어 없이)</option>
       </select>
     </label>
@@ -36,12 +36,12 @@
   <summary>연결이 안 될 때</summary>
   <ol>
     <li>로봇 전원을 켭니다. 블루투스 모듈 LED가 깜빡이면 연결을 기다리는 상태입니다.</li>
-    <li>"연결"을 누르고 목록에서 <b>otto2</b>를 고릅니다. 목록에 없으면 "모든 기기 보기"를 켜 보세요.</li>
-    <li>휴대폰이나 다른 PC가 otto2에 연결돼 있으면 먼저 끊으세요. BLE 모듈은 한 번에 하나만 연결됩니다.</li>
-    <li>Windows 설정의 블루투스 장치에 otto2를 "페어링"할 필요는 없습니다. 브라우저가 직접 연결합니다.</li>
+    <li>"연결"을 누르고 목록에서 로봇 이름(<b>OTTO2</b>, <b>OTTO3</b> 등)을 고릅니다. 로봇이 여러 대면 연결할 로봇만 켜 두세요. 목록에 없으면 "모든 기기 보기"를 켜 보세요.</li>
+    <li>휴대폰이나 다른 PC가 로봇에 연결돼 있으면 먼저 끊으세요. BLE 모듈은 한 번에 하나만 연결됩니다.</li>
+    <li>Windows 설정의 블루투스 장치에 로봇을 "페어링"할 필요는 없습니다. 브라우저가 직접 연결합니다.</li>
     <li>이 페이지는 <code>http://localhost:8000</code>처럼 로컬 서버로 열어야 합니다(파일을 더블클릭해 열면 블루투스가 막힙니다).</li>
     <li>지원 브라우저: 데스크톱 Chrome/Edge, 안드로이드 Chrome. iPhone/iPad(Safari)는 지원하지 않습니다 — 데모 모드로 화면만 시험할 수 있습니다.</li>
-    <li>USB 시리얼은 디버그용입니다. 이 보드의 USB 칩은 같은 데이터를 반복해 보내는 문제가 있어, 같은 줄 반복은 자동으로 무시합니다. Arduino 시리얼 모니터를 닫고 연결하세요.</li>
+    <li>USB 케이블: 목록에서 로봇의 COM 포트(예: COM10)를 고르세요. 연결하면 로봇이 재시작되어 약 3초 뒤 응답합니다. Arduino 시리얼 모니터·업로드 도구는 닫고 연결하세요. USB 전원만으로는 서보를 여러 개 움직일 때 전원이 부족할 수 있으니 배터리도 켜 두세요.</li>
   </ol>
   <p id="robotInfo" class="muted">로봇 정보: 연결 후 표시</p>
 </details>
@@ -138,7 +138,7 @@
   <section class="card" id="cardAuto" aria-labelledby="hAuto">
     <h2 id="hAuto">자동 반응</h2>
     <div class="checks">
-      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="1"> 터치하면 정지</label>
+      <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="1"> 터치 반응 <span class="muted small">(움직이는 중: 정지 · 멈춰 있을 때: 기쁨 + HELLO)</span></label>
       <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="2"> 장애물 앞에서 후퇴 <span class="why small" data-why="2"></span></label>
       <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="4"> 넘어짐 감지(서보 해제) <span class="why small" data-why="4"></span></label>
       <label class="chk"><input type="checkbox" class="auto cmd-any" data-bit="8"> 소리에 반응(입모양)</label>
@@ -256,20 +256,27 @@
     </div>
     <ol id="log" class="log" aria-live="off"></ol>
   </section>
+
+  <!-- 핀 연결 -->
+  <section class="card pin-card" id="cardPins" aria-labelledby="hPins">
+    <h2 id="hPins">핀 연결 (Otto 쉴드 + 아두이노 나노)</h2>
+    <svg id="nanoSvg" viewBox="0 0 640 230" role="img" aria-label="아두이노 나노 핀헤더 배치도"></svg>
+    <div class="legend" id="pinLegend"></div>
+    <div class="table-scroll">
+      <table class="pintable">
+        <thead><tr><th>기능</th><th>부품 단자</th><th>아두이노 핀</th><th>비고</th></tr></thead>
+        <tbody id="pinBody"></tbody>
+      </table>
+    </div>
+    <p class="muted small">서보 6개를 함께 움직이면 1A가 넘습니다. USB 전원만으로는 재부팅(부팅음 반복)이 날 수 있으니 배터리를 켜 두세요.</p>
+  </section>
 </main>
 
 <div id="toasts" class="toasts" aria-live="assertive"></div>
 
-<script>
-  // file:// 로 열면 ES 모듈이 막혀 아무 버튼도 동작하지 않는다 → 안내만 띄운다.
-  if (location.protocol === 'file:') {
-    document.getElementById('banners').innerHTML =
-      '<div class="banner bad"><b>파일을 직접 열었습니다.</b> 이 방식으로는 블루투스·USB·스크립트가 막힙니다. ' +
-      '명령 프롬프트에서 프로젝트 폴더로 가서 <code>python -m http.server 8000 -d web</code>를 실행하고 ' +
-      'Chrome/Edge에서 <code>http://localhost:8000</code>을 여세요.</div>';
-  }
-</script>
 <noscript><div class="banner bad">이 페이지는 JavaScript가 필요합니다.</div></noscript>
-<script type="module" src="js/app.js"></script>
+<!-- 더블클릭(file://)으로 열어도 동작하도록 모듈을 묶은 생성물을 일반 스크립트로 불러온다.
+     원본은 js/*.js, 고친 뒤 python tools/build_web_bundle.py 로 다시 생성 -->
+<script src="js/bundle.js"></script>
 </body>
 </html>

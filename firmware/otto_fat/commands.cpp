@@ -220,3 +220,12 @@ void commands_handle(char* line) {
   }
   comms_done(t, port);
 }
+
+// 멈춰 있을 때 터치 → 인사(behavior.cpp). 명령이 아니므로 ACK/DONE 없음
+void commands_greet() {
+  beginAction();
+  motion_gesture(TOUCH_GREET_GESTURE);  // 기쁨 제스처 (OttoHappy)
+  face_text(TOUCH_GREET_TEXT);          // HELLO 흐르기 → 얼굴 복원
+  motion_rehome();                      // 동작이 끝나면 원위치
+  endAction();
+}

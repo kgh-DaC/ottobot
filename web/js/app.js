@@ -10,6 +10,7 @@ import { initSensors } from './ui-sensors.js';
 import { initExpress } from './ui-express.js';
 import { initCalib } from './ui-calib.js';
 import { initDemoPanel } from './ui-demo.js';
+import { initPins } from './ui-pins.js';
 
 const link = new Link();
 const transports = { ble: null, serial: null, demo: null };
@@ -145,12 +146,14 @@ async function connect({ reuse = false } = {}) {
     return;
   }
   if (kind === 'serial') {
-    logRow('', '', `USB: 포트를 열면 Nano가 재시작됩니다. ${t.bootWaitMs}ms 기다립니다.`, 'info');
-    banner('usb', '<b>USB는 디버그용입니다.</b> 이 보드의 USB 칩(FTDI 호환)은 같은 데이터를 반복해 보내는 문제가 있어 같은 줄 반복은 무시합니다. 실제 조종은 BLE를 쓰세요.', 'warn');
+    logRow('', '', `USB: 포트를 열면 로봇이 재시작됩니다. ${t.bootWaitMs}ms 기다립니다.`, 'info');
+    clearBanner('usb');
     await new Promise((r) => setTimeout(r, t.bootWaitMs));
   } else clearBanner('usb');
   await handshake();
 }
+
+const BLE_TELEM_MIN_MS = 200;
 
 async function handshake() {
   robot.proto = null;
@@ -167,7 +170,9 @@ async function handshake() {
 
 function applyTelemetry() {
   if (!robot.connected) return;
-  const v = document.hidden ? 0 : Number($('#telemInterval').value);
+  let v = document.hidden ? 0 : Number($('#telemInterval').value);
+  // BLE: 로봇은 반이중이라 텔레메트리가 잦으면 명령이 깨진다. 200ms 미만이면 실측 손실 16%, 200ms는 0% (2026-11-24)
+  if (currentKind === 'ble' && v > 0 && v < BLE_TELEM_MIN_MS) v = BLE_TELEM_MIN_MS;
   send(CMD.TELEM, [v], { coalesce: 'telem' });
 }
 
@@ -188,6 +193,7 @@ link.on('status', (s, detail) => {
 link.on('log', (t) => logRow('', '', t, 'info'));
 link.on('warn', (t) => logRow('', '', t, 'err'));
 link.on('notice', (t) => { toast(t, 'warn'); logRow('', '', t, 'info'); });
+link.on('greet', () => { toast('터치! 로봇이 기쁨 제스처 후 HELLO 인사를 합니다(약 7초). 그동안 보낸 명령은 인사가 끝난 뒤 실행됩니다.'); });
 link.on('tx', (line, note) => {
   const name = cmdNameFromCode(line.charCodeAt(0)) ?? '?';
   logRow('tx', line.trim(), note ? `${name} (${note})` : name, note === 'keepalive' ? 'keep' : '');
@@ -448,7 +454,7 @@ function setupConnection() {
   }
   if (!serialSupported()) sel.querySelector('option[value=serial]').disabled = true;
   if (!window.isSecureContext) {
-    banner('insecure', '<b>보안 컨텍스트가 아닙니다.</b> 블루투스·USB는 https 또는 http://localhost 에서만 됩니다. <code>python -m http.server 8000 -d web</code>로 열고 http://localhost:8000 으로 접속하세요.', 'bad');
+    banner('insecure', '<b>보안 컨텍스트가 아닙니다.</b> 블루투스·USB는 index.html을 직접 열거나(file://) https·http://localhost 에서만 됩니다. Chrome 또는 Edge로 web/index.html을 여세요.', 'bad');
   }
   const syncKind = () => {
     $('#showAllWrap').hidden = sel.value !== 'ble';
@@ -479,6 +485,7 @@ setupMove();
 initSensors(ctx);
 initExpress(ctx);
 initCalib(ctx);
+initPins();
 setConnUi('off');
 refreshControls();
 updateMoveStatus();

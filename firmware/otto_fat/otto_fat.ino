@@ -9,25 +9,8 @@
 #include "behavior.h"
 #include "commands.h"
 
-// Print::print(int) 대신 itoa로 출력 (Flash 절약)
-static void putNum(Print& u, int16_t v, uint8_t base) {
-  char tmp[8];
-  itoa(v, tmp, base);
-  u.write((const uint8_t*)tmp, strlen(tmp));
-}
-
-static void bootDiag() {   // USB 전용 사람용 진단, '#' 시작 → 웹 RAW
-  Print& u = comms_usb();
-  u.print(F("# Otto fat fw "));  putNum(u, FW_BUILD, 10);
-  u.print(F(" proto "));          putNum(u, PROTO_VERSION, 10);
-  u.print((sensors_present() & SENS_IMU) ? F(" | IMU ok(0x") : F(" | IMU none(0x"));
-  putNum(u, sensors_imuWhoAmI(), 16);
-  u.print(F(") | US "));
-  if (sensors_present() & SENS_US) { putNum(u, sensors_distance(), 10); u.print(F("cm")); }
-  else u.print(F("none"));
-  u.print(F(" | touch "));        putNum(u, sensors_touch() ? 1 : 0, 10);
-  u.print(F(" | auto "));         putNum(u, behavior_auto(), 10);
-  u.print(F("\n"));
+static void bootDiag() {   // USB 전용 사람용 표시, '#' 시작 → 웹 RAW. 센서 유무는 뒤따르는 i·v 6 줄을 본다
+  comms_usb().print(F("# Otto fat fw 1\n"));   // Flash 30,720B 한도 때문에 숫자 출력 없이 고정 문자열(2026-11-26)
 }
 
 void setup() {
@@ -50,5 +33,6 @@ void loop() {
   comms_poll(commands_handle);    // 입력 (완성된 줄은 도착 순서대로 처리)
   behavior_motion();              // watchdog 판정(poll 직후) → MOVE 1주기 / AVOID 1걸음
   commands_tick();                // 6. TONE 종료
+  motion_tick();                  // 팔 서보 detach (BT 송수신 중 떨림 방지)
   behavior_telemetry();
 }

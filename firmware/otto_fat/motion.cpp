@@ -9,6 +9,7 @@ static int16_t s_trim[4];
 static uint8_t s_id = 1;
 static int16_t s_period = 1000, s_size = 15;
 static unsigned long s_lastEnd = 0;
+static unsigned long s_armAt = 0;   // 마지막 팔 각도 쓰기 시각 (ARM_DETACH_MS 뒤 detach)
 
 static void markEnd() { s_lastEnd = millis(); }
 void motion_markEnd() { markEnd(); }
@@ -17,6 +18,7 @@ void motion_markEnd() { markEnd(); }
 static void armsWrite(int16_t l, int16_t r) {
   s_armL.write(ARM_DIR_L < 0 ? 180 - l : l);
   s_armR.write(ARM_DIR_R < 0 ? 180 - r : r);
+  s_armAt = millis();
 }
 
 static void armsAttach() {
@@ -114,6 +116,9 @@ void motion_sing(uint8_t id) {
   markEnd();
 }
 void motion_singLib(uint8_t libSong) { Otto.sing(libSong); markEnd(); }
+
+// 터치 인사 끝: 다리를 홈(90°+트림)으로 확실히 되돌린다. 라이브러리는 '쉬는 중'이면 home()을 건너뛰므로 먼저 푼다.
+void motion_rehome() { Otto.setRestState(false); motion_home(); }
 void motion_backStep() { Otto.walk(1, AVOID_PERIOD, -1); markEnd(); }
 
 void motion_detachAll() {
@@ -127,6 +132,14 @@ void motion_attachAll() {
   armsAttach();
   Otto.setRestState(false);
   motion_home();
+}
+
+// 팔이 목표 각도에 도달한 뒤 신호를 끊어 떨림을 없앤다 (다리는 Otto 라이브러리가 같은 방식으로 detach)
+void motion_tick() {
+  if (millis() - s_armAt >= ARM_DETACH_MS) {   // detach는 이미 떼어져 있어도 안전하다
+    s_armL.detach();
+    s_armR.detach();
+  }
 }
 
 bool motion_isForward(uint8_t id) { return id == 1 || id == 9 || id == 12; }

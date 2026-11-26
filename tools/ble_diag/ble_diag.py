@@ -1,12 +1,13 @@
-# BLE 양방향 진단: 웹 BLE 연결을 끊은 뒤 실행. python tools/ble_diag/ble_diag.py (bleak 필요, python -I 로 실행하면 bleak를 못 찾음)
+# BLE 양방향 진단: 웹 BLE 연결을 끊은 뒤 실행. python tools/ble_diag/ble_diag.py [이름, 기본 otto2] (bleak 필요, python -I 로 실행하면 bleak를 못 찾음)
 import asyncio, sys, time, serial
 from bleak import BleakScanner, BleakClient
 sys.stdout.reconfigure(encoding="utf-8")
+NAME = (sys.argv[1] if len(sys.argv) > 1 else "otto2").lower()   # 로봇별 모듈 이름: OTTO2, OTTO3 …
 got = bytearray()
 def on(_, data): got.extend(data); print("  NOTIFY", repr(bytes(data)))
 async def main():
-    d = await BleakScanner.find_device_by_filter(lambda d, a: (d.name or a.local_name or "") == "otto2", timeout=15)
-    if not d: print("otto2 못 찾음(다른 기기·웹이 연결 중일 수 있음)"); return
+    d = await BleakScanner.find_device_by_filter(lambda d, a: (d.name or a.local_name or "").lower() == NAME, timeout=15)
+    if not d: print(f"{NAME} 못 찾음(다른 기기·웹이 연결 중일 수 있음)"); return
     print("찾음", d.address)
     async with BleakClient(d, timeout=20) as c:
         nch = wch = None

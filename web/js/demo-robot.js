@@ -17,6 +17,8 @@ const TOKEN_TO_CMD = Object.fromEntries(Object.entries(CMD).map(([n, c]) => [c.t
 const codeOf = (name) => CMD[name].token.charCodeAt(0);
 const ALLOW_AVOID = new Set(['PING', 'STOP', 'TONE', 'MOUTH', 'MATRIX', 'TELEM', 'AUTO']);
 const ALLOW_FALLEN = new Set(['PING', 'STOP', 'TONE', 'SING', 'MOUTH', 'MATRIX', 'TEXT', 'TELEM', 'AUTO']);
+// 터치 인사(기쁨 제스처 ≈ 2.5초 + HELLO 흐르기 ≈ 3.5초 + 원위치 0.5초) — 펌웨어 commands_greet
+const TOUCH_GREET_MS = 6500;
 const BLOCK_MS = { GESTURE: 3000, SING: 1500, HOME: 600, SERVO: 300, TRIM: 600 };
 
 export class DemoRobot {
@@ -428,6 +430,19 @@ export class DemoRobot {
           this._emitView();
           setTimeout(() => { if (this.view.action === '터치 정지 (확인음)') { this.view.action = ''; this._emitView(); } }, 300);
           touchStopped = true;
+        } else if ((this.auto & 1) && this.state === ST.IDLE) {
+          // 멈춰 있을 때 터치 → 인사: 기쁨 제스처 + HELLO 흐르기 (블로킹, 응답 없음)
+          this.state = ST.ACTION;
+          this.view.action = '터치 인사 (기쁨 → HELLO)';
+          this.view.text = 'HELLO';
+          this._emitView();
+          this.busyUntil = now + TOUCH_GREET_MS;
+          this.busyDone = (t) => {
+            if (this.state === ST.ACTION) this.state = ST.IDLE;
+            this.view.action = '';
+            this.actionEndAt = t;
+            this._emitView();
+          };
         }
       }
     }

@@ -91,7 +91,7 @@ Otto 라이브러리 밖에서 `Servo` 2개로 제어한다. `home()` 때 팔도
 ## 부팅 자가진단
 
 `setup()` 끝에서 USB 시리얼로 사람이 읽을 수 있는 진단을 한 번 출력한다(이 줄들은 웹 파서에서 RAW로 처리된다):
-`# Otto fat fw <build> proto <ver> | IMU ok(0x68) | US 23cm | touch 0` 그리고 `EVENT BOOT`를 보낸다.
+`# Otto fat fw 1`(Flash 한도 때문에 고정 문자열. 센서 유무는 `i`·`v 6 <sensors>`) 그리고 `EVENT BOOT`를 보낸다.
 
 ## 컴파일과 업로드
 
@@ -101,8 +101,8 @@ python .claude/skills/otto-firmware/scripts/compile.py --sketch firmware/otto_fa
 python .claude/skills/otto-firmware/scripts/compile.py --upload --port COM5
 ```
 
-- 기본 FQBN **`arduino:avr:uno`** (2026-11-24 결정): 이 Nano는 Optiboot라 Uno 정의로 빌드·업로드하면 Flash 32,256B를 쓸 수 있다(Nano 정의는 30,720B). 전체 펌웨어가 Nano 정의 98%였기 때문. 업로드 동기화 실패 시 `OTTO_FQBN=arduino:avr:nano:cpu=atmega328old`(이 경우 Flash 부족 가능).
-- Flash 한도 97%(compile.py `--flash-limit`). 대부분은 Otto 라이브러리(제스처·노래)가 차지한다. 기능 추가 전에 여유를 확인한다.
+- 기본 FQBN **`arduino:avr:uno`** (2026-11-24 결정): 이 Nano는 Optiboot라 업로드는 Uno 정의로 한다. **단 Flash는 30,720B가 실제 한도다(2026-11-24 실측).** 30,720B를 넘는 펌웨어는 업로드는 성공하지만 리셋 후 부팅이 멈춘다(부팅 문구 `# Ott`에서 정지, BLE·USB 무응답). 기능 없는 데이터만 덧붙여 넘겨도 재현됨 → 부트 섹션 퓨즈가 2KB로 보인다. compile.py가 `HARD_FLASH_MAX`로 업로드 **전에** 막는다. 업로드 동기화 실패 시 `OTTO_FQBN=arduino:avr:nano:cpu=atmega328old`(이 경우 Flash 부족 가능).
+- Flash 한도: 30,720B 절대 한도(compile.py `HARD_FLASH_MAX`) + 97%(`--flash-limit`, 32,256 기준이라 사실상 절대 한도가 먼저 걸림). 여유가 100B 안팎이니 기능 추가 전 반드시 확인하고, 공간이 필요하면 USB 전용 부팅 문구(bootDiag)부터 줄인다. 대부분은 Otto 라이브러리(제스처·노래)가 차지한다. 기능 추가 전에 여유를 확인한다.
 - **업로드할 때는 블루투스 모듈 TX/RX 선이 D0/D1에 연결돼 있지 않은지 확인** (이 설계는 D11/D12라 영향 없음). 업로드 포트는 COM10.
 - 다리 트림은 이미 EEPROM에 저장돼 있다(YL −10, 나머지 0). `Otto.init(..., true, ...)`로 불러오고, 펌웨어가 EEPROM 0~3을 다른 용도로 쓰지 않는다.
 - 초음파 센서는 현재 응답이 없다(하드웨어 점검 대기). 0 = 측정 실패로 처리하고, 부팅 시 응답이 없으면 INFO sensors 비트에서 빼고 장애물 자동 반응을 끈다.

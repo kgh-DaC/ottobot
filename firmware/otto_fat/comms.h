@@ -19,6 +19,7 @@ extern unsigned long g_lastValidRx; // 마지막 올바른 줄(ACK) 수신 시�
 typedef void (*LineHandler)(char* line);
 
 void comms_begin();
+bool comms_btRxBusy();             // BT 줄을 받는 중(덜 받은 줄·미처리 바이트) → BT 송신을 미룰 것
 void comms_poll(LineHandler h);   // 쌓인 바이트를 모두 읽고 완성된 줄마다 h 호출
 
 // 인자 파싱: line[0] 뒤의 공백 구분 정수. 성공 시 true. strMode면 나머지를 문자열로.
