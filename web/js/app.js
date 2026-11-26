@@ -39,6 +39,7 @@ const ctx = {
   refresh: refreshControls,
   onRefresh(fn) { refreshHooks.push(fn); },
   setRobotState,
+  demo: () => (currentKind === 'demo' ? transports.demo : null),
 };
 
 /** 명령 송신. 오류는 토스트로 보여주고 false를 돌려준다. */

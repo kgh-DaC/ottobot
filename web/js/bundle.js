@@ -2551,7 +2551,7 @@ const __m_ui_twin = (() => {
   // 표시는 "근사"다: 로봇은 서보 각도를 보내지 않으므로 다리 움직임은 Otto 라이브러리(ref/OttoDIYLib, Otto.cpp)의
   // 진동자 값(진폭 A, 중심 O, 위상차)으로 웹에서 계산한다. 기울기·거리·터치·상태는 텔레메트리 실측값이다.
   // 좌표: 1 단위 = 1 cm, 위 = +Y, 로봇 정면 = +Z(처음 시점에서 화면 쪽), 로봇의 왼쪽 = +X.
-  const { ST, EVT } = __m_protocol;
+  const { CMD, ST, EVT } = __m_protocol;
   const { getPixel } = __m_matrix_editor;
   // Otto_mouths.h Mouthtable (6x5 비트, 위 행부터, 각 행 왼쪽 → 오른쪽). 입모양 번호 0~30
   const MOUTHS = [
@@ -2729,7 +2729,12 @@ const __m_ui_twin = (() => {
     const touchMat = mat(0x4b5563, { emissive: 0x000000 });
     const touchPad = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.35, 24), touchMat);
     touchPad.position.set(0, 6.95, 0);
-    head.add(touchPad);
+    const touchRing = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.14, 8, 32), mat(0x22c55e, { emissive: 0x0b3d1c }));
+    touchRing.rotation.x = Math.PI / 2; touchRing.position.set(0, 6.95, 0);
+    // 누르기 쉬운 넓은 투명 판정 영역(머리 윗면 가운데)
+    const touchHit = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 16), new THREE.MeshBasicMaterial({ visible: false }));
+    touchHit.position.set(0, 7.0, 0);
+    head.add(touchPad, touchRing, touchHit);
 
     // 초음파 거리 콘(정면)
     const coneMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, depthWrite: false });
@@ -2836,7 +2841,11 @@ const __m_ui_twin = (() => {
         updateNote();
       }
       if (msg.name === 'EVENT') {
-        if (f.kind === EVT.TOUCH) S.touchFlash = performance.now();
+        if (f.kind === EVT.TOUCH) {
+          S.touchFlash = performance.now();
+          // 펌웨어 commands_greet: 터치 반응이 켜져 있고 멈춰 있으면 기쁨 제스처 + HELLO (명령 없이 로봇이 스스로 함 → 3D에서 재현)
+          if ((ctx.robot.auto & 1) && !S.move && !link.hold && S.state === ST.IDLE) playGreet();
+        }
         if (f.kind === EVT.FALL) { S.state = ST.FALLEN; goHome(); }
         if (f.kind === EVT.RECOVER) S.state = ST.IDLE;
         updateNote();
@@ -2985,11 +2994,79 @@ const __m_ui_twin = (() => {
     drawLed(performance.now());
     kick();
 
+    // ---------------- 3D 터치 센서 누르기 ----------------
+    // 실제 터치 센서와 같은 규칙(펌웨어 behavior.cpp): 터치 반응(AUTO 1)이 켜져 있을 때만,
+    //   움직이는 중 → 정지 / 멈춰 있을 때 → 기쁨 제스처(1) + HELLO + 원위치(commands_greet)
+    let greetTimer = 0;
+    function playGreet() {        // 3D 표시만(명령을 보내지 않음)
+      const prev = S.face.kind === 'text' ? { kind: 'mouth', id: 10 } : S.face;
+      S.move = null; S.legsStatic = null;
+      S.gesture = { id: 1, t0: performance.now(), dur: 2600 };
+      clearTimeout(greetTimer);
+      greetTimer = setTimeout(() => {
+        setFace({ kind: 'text', cols: textColumns('HELLO'), t0: performance.now() });
+        greetTimer = setTimeout(() => { if (S.face.kind === 'text') setFace(prev); goHome(); }, 3600);
+      }, 2600);
+    }
+    let greeting = false;
+    async function pressTouch() {
+      S.touchFlash = performance.now();
+      const r = ctx.robot;
+      if (!r.connected) {
+        ctx.toast('연결 안 됨: 3D에서만 터치 인사(기쁨 제스처 → HELLO)를 보여 줍니다. 로봇을 연결하면 로봇도 같이 움직입니다.');
+        playGreet();
+        return;
+      }
+      const demo = ctx.demo?.();
+      if (demo) {                 // 데모 로봇: 가상 센서를 직접 눌러 펌웨어 규칙 그대로 반응하게 한다
+        // 펌웨어처럼 걸음 한 주기 동안은 센서를 읽지 않으므로(블로킹), 주기가 끝나 읽힐 때까지 눌러 둔다
+        demo.world.touch = true;
+        const holdMs = Math.max(250, (demo.busyUntil ?? 0) - performance.now() + 120);
+        setTimeout(() => { demo.world.touch = false; }, holdMs);
+        return;
+      }
+      if (!(r.auto & 1)) { ctx.toast("'자동 반응 → 터치 반응'이 꺼져 있어 실제 로봇처럼 아무 동작도 하지 않습니다. 켜고 다시 눌러 보세요.", 'warn'); return; }
+      if (r.state === ST.FALLEN) { ctx.toast('넘어진 상태에서는 터치 반응이 없습니다.', 'warn'); return; }
+      if (link.hold || r.state === ST.MOVING || r.state === ST.AVOID) { link.stop().catch((e) => ctx.toast(e.message, 'bad')); ctx.toast('터치: 움직이던 로봇을 멈춥니다.'); return; }
+      if (greeting || link.busy) { ctx.toast('앞 동작이 끝나면 다시 눌러 주세요.', 'warn'); return; }
+      // 실제 로봇은 센서를 원격으로 누를 수 없으므로 같은 순서의 명령을 보낸다
+      greeting = true;
+      ctx.toast('터치 인사: 기쁨 제스처 → HELLO → 원위치');
+      try {
+        if (await ctx.send(CMD.GESTURE, [1]) && await ctx.send(CMD.TEXT, ['HELLO'])) await ctx.send(CMD.MOVE, [0]);
+      } finally { greeting = false; }
+    }
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    const hitTouch = (e) => {
+      const rc = renderer.domElement.getBoundingClientRect();
+      ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      return ray.intersectObject(touchHit, false).length > 0;
+    };
+    let downAt = null;
+    renderer.domElement.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; });
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const d = downAt; downAt = null;
+      if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // 끌어서 돌린 것은 무시
+      if (hitTouch(e)) pressTouch();
+    });
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (e.buttons) return;
+      renderer.domElement.style.cursor = hitTouch(e) ? 'pointer' : '';
+    });
+    $('#twinTouch')?.addEventListener('click', pressTouch);
+
     $('#twinReset')?.addEventListener('click', () => {
       camera.position.copy(HOME_CAM); controls.target.copy(TARGET); controls.update();
       S.yaw = 0; S.gx = 0; S.gz = 0;
     });
-    return { state: S };
+    // 시험·디버그용: 터치 센서의 화면 좌표(px)
+    function touchScreenPos() {
+      const v = new THREE.Vector3(); touchPad.getWorldPosition(v); v.project(camera);
+      const rc = renderer.domElement.getBoundingClientRect();
+      return { x: rc.left + (v.x + 1) / 2 * rc.width, y: rc.top + (1 - v.y) / 2 * rc.height };
+    }
+    return { state: S, pressTouch, touchScreenPos };
   }
   return { initTwin };
 })();
@@ -3070,6 +3147,7 @@ const __m_app = (() => {
     refresh: refreshControls,
     onRefresh(fn) { refreshHooks.push(fn); },
     setRobotState,
+    demo: () => (currentKind === 'demo' ? transports.demo : null),
   };
 
   /** 명령 송신. 오류는 토스트로 보여주고 false를 돌려준다. */
