@@ -2574,7 +2574,7 @@ const __m_ui_pins = (() => {
         if (col[key] == null || id === 'usb') return;
         if (key.startsWith('I2C')) o += wire(sx, by, col[key] + 7, 348, e.color);
         else if (top) o += wire(sx, by + h, col[key] + 7, 186, e.color);
-        else o += wire(sx, by, col[key] + 7, 400, e.color);
+        else o += wire(sx, by, col[key] + 7, 420, e.color);   // 아날로그: S 칸(맨 아래) 아래쪽 끝에서
       });
       return o;
     };

@@ -18,3 +18,4 @@ Otto DIY 휴머노이드(Fat 버전) 로봇 — Arduino Nano 펌웨어 + HC-05 �
 | 2026-11-26 | 웹에 3D 형상 카드(ui-twin.js, three.js 로컬 묶음 web/vendor)와 카드 블록 배치(layout.js) 추가 | otto-web | 사용자 요청(통합 허브 세션) |
 | 2026-11-27 | 웹 핀 연결 카드를 아두이노 나노 확장 쉴드(실물 배선 사진 ref/led matrix 회로도.jpg 배치: 위 디지털 G·V·S, 가운데 나노·RX TX/I2C 헤더, 아래 아날로그 G·V·S) 그림으로 바꾸고 표에 '쉴드 단자' 열 추가. 핀 번호는 그대로 | otto-web(web/js/ui-pins.js, index.html, style.css, bundle.js) | 사용자 요청(통합 허브 세션) |
 | 2026-11-28 | 핀 연결 그림 위쪽 부품 블록을 헤더 순서(왼쪽 D13 → 오른쪽 D2: 부저·BLE·초음파·팔·다리)로 놓고 블록 안 선 출발점도 핀 번호 순으로 해서 연결선이 꼬이지 않게 함 | otto-web(web/js/ui-pins.js, bundle.js) | 사용자 요청(통합 허브 세션) |
+| 2026-11-28 | 핀 연결 그림 아날로그 쪽 연결선 끝을 V·S 사이에서 S 칸(맨 아래)으로 옮김 | otto-web(web/js/ui-pins.js, bundle.js) | 사용자 요청(통합 허브 세션) |
