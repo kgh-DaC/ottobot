@@ -112,7 +112,10 @@ function drawShield(users) {
         + `<text x="${bx + 10}" y="${ry + 11.5}" fill="#e8eaf6" font-size="11" ${F}>${esc(p.t)}</text>`
         + `<rect x="${bx + w - pw - 8}" y="${ry - 1}" width="${pw}" height="16" rx="8" fill="${e.color}"/>`
         + `<text x="${bx + w - 8 - pw / 2}" y="${ry + 11}" text-anchor="middle" fill="#0b0f14" font-size="11" font-weight="700" ${M}>${esc(pin)}</text></g>`;
-      const n = e.pins.length, sx = bx + 20 + (n > 1 ? i * (w - 40) / (n - 1) : (w - 40) / 2);
+      // 선 출발점: 헤더처럼 번호가 큰 핀이 왼쪽(위 블록)이 되게 해서 선이 꼬이지 않게 한다
+      const num = (q) => parseInt(q.p.slice(1), 10), n = e.pins.length;
+      const k = top ? e.pins.filter((q) => num(q) > num(p)).length : i;
+      const sx = bx + 20 + (n > 1 ? k * (w - 40) / (n - 1) : (w - 40) / 2);
       const key = p.hdr === 'I2C 헤더 SDA' ? 'I2C_SDA' : p.hdr === 'I2C 헤더 SCL' ? 'I2C_SCL' : p.p;
       if (col[key] == null || id === 'usb') return;
       if (key.startsWith('I2C')) o += wire(sx, by, col[key] + 7, 348, e.color);
@@ -121,9 +124,9 @@ function drawShield(users) {
     });
     return o;
   };
-  // 위: 디지털 부품
-  s += block(10, 20, 150, 'buz', true) + block(170, 10, 160, 'us', true) + block(340, 10, 170, 'legs', true)
-    + block(520, 20, 150, 'arms', true) + block(680, 20, 210, 'ble', true);
+  // 위: 디지털 부품 — 헤더와 같은 순서(왼쪽 D13 → 오른쪽 D2)
+  s += block(10, 20, 130, 'buz', true) + block(150, 20, 210, 'ble', true) + block(370, 20, 150, 'us', true)
+    + block(530, 20, 140, 'arms', true) + block(680, 10, 200, 'legs', true);
   // 아래: 아날로그·I2C 부품
   s += block(160, 488, 150, 'touch', false) + block(320, 488, 170, 'mtx', false)
     + block(500, 488, 160, 'sound', false) + block(705, 470, 185, 'imu', false);
