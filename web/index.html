@@ -272,12 +272,13 @@
 
   <!-- 핀 연결 -->
   <section class="card pin-card" id="cardPins" aria-labelledby="hPins">
-    <h2 id="hPins">핀 연결 (Otto 쉴드 + 아두이노 나노)</h2>
-    <svg id="nanoSvg" viewBox="0 0 640 230" role="img" aria-label="아두이노 나노 핀헤더 배치도"></svg>
+    <h2 id="hPins">핀 연결 (아두이노 나노 확장 쉴드)</h2>
+    <svg id="nanoSvg" viewBox="0 0 900 600" role="img" aria-label="아두이노 나노 확장 쉴드 배치와 부품별 연결 핀"></svg>
+    <p class="muted small" style="text-align:center">실물 배선 사진(ref/led matrix 회로도.jpg)과 같은 방향으로 본 확장 쉴드입니다. 위 줄은 디지털, 아래 줄은 아날로그 핀이고 한 열이 위에서부터 G(GND)·V(5V)·S(신호)입니다. 부품을 꽂은 열은 색칠했고, 핀에 마우스를 올리면 용도가 나옵니다.</p>
     <div class="legend" id="pinLegend"></div>
     <div class="table-scroll">
       <table class="pintable">
-        <thead><tr><th>기능</th><th>부품 단자</th><th>아두이노 핀</th><th>비고</th></tr></thead>
+        <thead><tr><th>기능</th><th>부품 단자</th><th>쉴드 단자</th><th>나노 핀</th><th>비고</th></tr></thead>
         <tbody id="pinBody"></tbody>
       </table>
     </div>

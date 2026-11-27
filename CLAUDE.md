@@ -16,3 +16,4 @@ Otto DIY 휴머노이드(Fat 버전) 로봇 — Arduino Nano 펌웨어 + HC-05 �
 | 2026-11-24 | 첫 실행 반영: otto-lib-api에 프로토콜 번호↔라이브러리 상수 변환표, QA 체크리스트에 id 변환 항목, 빌드 기본 FQBN uno(Optiboot)+Flash 한도 97% | otto-hardware, otto-qa, otto-firmware(compile.py) | 제스처·노래 번호 오매핑 결함, Nano 정의 Flash 98% |
 | 2026-11-24 | BLE 실측(OTTO2 대문자, FFE1 notify·FFE2 write, 연속 송신 시 끊김→줄 간격 20ms, SoftwareSerial 반이중), Flash 실측 한도 30,720B를 compile.py가 업로드 전에 강제, 웹 번들(file:// 실행) | otto-hardware, otto-firmware(compile.py) | BLE 무응답·부팅 멈춤 진단 |
 | 2026-11-26 | 웹에 3D 형상 카드(ui-twin.js, three.js 로컬 묶음 web/vendor)와 카드 블록 배치(layout.js) 추가 | otto-web | 사용자 요청(통합 허브 세션) |
+| 2026-11-27 | 웹 핀 연결 카드를 아두이노 나노 확장 쉴드(실물 배선 사진 ref/led matrix 회로도.jpg 배치: 위 디지털 G·V·S, 가운데 나노·RX TX/I2C 헤더, 아래 아날로그 G·V·S) 그림으로 바꾸고 표에 '쉴드 단자' 열 추가. 핀 번호는 그대로 | otto-web(web/js/ui-pins.js, index.html, style.css, bundle.js) | 사용자 요청(통합 허브 세션) |
