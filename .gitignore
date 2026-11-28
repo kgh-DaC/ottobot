@@ -9,3 +9,8 @@ ref/*.jpg
 # 빌드 산출물
 build/
 __pycache__/
+
+# 도구·시험 임시 파일
+node_modules/
+.pytest_cache/
+_workspace/qa_tmp/
